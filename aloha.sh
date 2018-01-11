@@ -10,17 +10,20 @@ PORT="-p 80:80"
 HTTPS_PORT=
 
 [[ $(cat $CONF_DIR/nginx.conf) =~ $HTTP_PORT_REGEXP ]]
-[ ! -z ${BASH_REMATCH[1]:-} ] && PORT="-p ${BASH_REMATCH[1]}:80"
+[ ! -z ${BASH_REMATCH[1]:-} ] && PORT="-p ${BASH_REMATCH[1]}:${BASH_REMATCH[1]}"
 
 [[ $(cat $CONF_DIR/nginx.conf) =~ $HTTPS_PORT_REGEXP ]]
-[ ! -z ${BASH_REMATCH[1]:-} ] && HTTPS_PORT="-p ${BASH_REMATCH[1]}:443"
+[ ! -z ${BASH_REMATCH[1]:-} ] && HTTPS_PORT="-p ${BASH_REMATCH[1]}:${BASH_REMATCH[1]}"
 
 
 ! [ -x "$(command -v docker)" ] && echo 'Docker is not installed.' >&2 && exit 1
 echo "Pulling image from docker repo..."
 docker pull greshilov/mapsme:alohalytics
 echo "Done."
-docker stop $(docker ps -a -q)
+
+(
+  docker stop $(docker ps -a -q)
+)
 
 docker run -td \
 --mount type=bind,source=$CONF_DIR,target=/conf \
@@ -28,6 +31,6 @@ docker run -td \
 --volume $LOGS_DIR:/logs:rw \
 ${PORT:-} \
 ${HTTPS_PORT:-} \
-alohalytics
+greshilov/mapsme:alohalytics
 
 echo "Running on ports ${PORT:-} ${HTTPS_PORT:-}"
