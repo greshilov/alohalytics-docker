@@ -24,6 +24,7 @@ RUN apt-get install -y \
   libfcgi-dev \
   spawn-fcgi \
   nginx \
+  logrotate \
   --no-install-recommends
 
 RUN mkdir -p /aloha/run
@@ -31,11 +32,4 @@ RUN git clone https://github.com/biodranik/Alohalytics /aloha/src
 RUN cmake -B/aloha/bin -H/aloha/src
 RUN make -C /aloha/bin fcgi_server
 
-RUN echo 'yes | cp -rf /conf/nginx.conf /etc/nginx/nginx.conf \n\
-spawn-fcgi -a 127.0.0.1 -p 8888 -P /aloha/run/aloha.pid -- /aloha/bin/server/fcgi_server /data /monitoring \n\
-nginx \n\
-while :; do \n\
-  sleep 300 \n\
-done' > /etc/run.sh
-
-CMD ["/bin/bash", "/etc/run.sh"]
+CMD ["/bin/bash", "/conf/run.sh"]
