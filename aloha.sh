@@ -1,6 +1,14 @@
 #!/bin/bash
 set -u -e
 
+OPT_INTERACTIVE=
+while getopts "i" opt; do
+    case $opt in
+        i)
+          OPT_INTERACTIVE="ON" ;;
+    esac
+done
+
 HTTP_PORT_REGEXP="listen[[:space:]]*([0-9]*);"
 HTTPS_PORT_REGEXP="[[:space:]]listen[[:space:]]*([0-9]*)[[:space:]]*ssl;"
 CONF_DIR="$PWD"/conf
@@ -25,12 +33,25 @@ echo "Done."
   docker stop $(docker ps -a -q)
 )
 
-docker run -td \
---mount type=bind,source=$CONF_DIR,target=/conf \
---volume $DATA_DIR:/data:rw \
---volume $LOGS_DIR:/logs:rw \
-${PORT:-} \
-${HTTPS_PORT:-} \
-greshilov/mapsme:alohalytics
-
 echo "Running on ports ${PORT:-} ${HTTPS_PORT:-}"
+echo $OPT_INTERACTIVE
+
+if [ -z "$OPT_INTERACTIVE" ]; then
+  docker run -td \
+  --mount type=bind,source=$CONF_DIR,target=/conf \
+  --volume $DATA_DIR:/data:rw \
+  --volume $LOGS_DIR:/logs:rw \
+  ${PORT:-} \
+  ${HTTPS_PORT:-} \
+  greshilov/mapsme:alohalytics
+else
+  echo 'Running in interactive mode'
+  docker run -ti \
+  --entrypoint=/bin/bash \
+  --mount type=bind,source=$CONF_DIR,target=/conf \
+  --volume $DATA_DIR:/data:rw \
+  --volume $LOGS_DIR:/logs:rw \
+  ${PORT:-} \
+  ${HTTPS_PORT:-} \
+  greshilov/mapsme:alohalytics
+fi
